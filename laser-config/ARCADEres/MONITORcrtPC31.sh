@@ -40,6 +40,7 @@ mount -o remount,ro / > /dev/null 2>&1
 # Borrar overrides de SwitchRes que rompian los juegos
 mount -o remount,rw / > /dev/null 2>&1
 rm -f "/recalbox/share/system/configs/retroarch/switchres.ini"
+rm -f "/recalbox/share/system/.config/retroarch/config/switchres.ini"
 rm -f /recalbox/share/system/.config/retroarch/config/*/*.switchres.ini
 mount -o remount,ro / > /dev/null 2>&1
 echo "               Overrides SwitchRes viejos eliminados"
@@ -131,28 +132,23 @@ echo "================================================================="
 echo "                                                "
 
 
-# Copiar parche LASER a múltiples destinos
+# Copiar configuracion LASER a los sistemas de Recalbox
+# Recalbox 10.1 lee los overrides por sistema en configs/retroarch/<sistema>.cfg
+SOURCE_CFG="/recalbox/share/laser-config/CRT Switchres LASER/FinalBurn Neo2/FinalBurn Neo.cfg"
+RECALBOX_RA_CONFIG="/recalbox/share/system/configs/retroarch"
 
-SOURCE_MAME="/recalbox/share/laser-config/CRT Switchres LASER/FinalBurn Neo2/FinalBurn Neo.cfg"
-CONFIG_BASE="/recalbox/share/system/.config/retroarch/config"
+echo "Instalando configuraciones de sistema..."
 
-DEST_DIRS=("FinalBurn Neo" "MAME" "MAME 2003 (0.78)" "MAME 2003-Plus" "MAME 2010" "MAME 2015" "Nestopia" "FCEUmm" "QuickNES" "Snes9x" "Snes9x 2005" "Snes9x 2010" "Genesis Plus GX" "Picodrive" "PCSX-ReARMed" "Beetle PSX" "DuckStation" "Flycast" "Gambatte" "mgba" "VBA-M" "SameBoy" "Beetle SuperGrafx" "blueMSX" "uae4arm")
-
-echo "Instalando configuraciones de cores..."
-
-for dir in "${DEST_DIRS[@]}"
-do
-    DEST="$CONFIG_BASE/$dir"
-    echo "Copiando a $DEST"
-
-    mkdir -p "$DEST"
-
-    cp "$SOURCE_MAME" "$DEST/$dir.cfg"
+for SYSTEM_DIR in /recalbox/share/roms/*; do
+    [ -d "$SYSTEM_DIR" ] || continue
+    SYSTEM=$(basename "$SYSTEM_DIR")
+    echo "  $SYSTEM"
+    cp -f "$SOURCE_CFG" "$RECALBOX_RA_CONFIG/$SYSTEM.cfg"
 done
 
 
 # Copiar parche FBN a múltiples destinos
-DEST_DIR="/recalbox/share/system/.config/retroarch/config/FinalBurn Neo"
+DEST_DIR="/recalbox/share/system/configs/retroarch/fbneo"
 
 echo ""
 echo "==============================================================="
@@ -190,8 +186,8 @@ fi
 
 
 # Base
-CONFIG_BASE="/recalbox/share/system/.config/retroarch/config"
-DEST_DIRS=("MAME" "MAME 2003 (0.78)" "MAME 2003-Plus" "MAME 2010" "MAME 2015")
+CONFIG_BASE="/recalbox/share/system/configs/retroarch"
+DEST_DIRS=("mame")
 
 echo ""
 echo "==============================================================="

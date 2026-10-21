@@ -40,6 +40,7 @@ mount -o remount,ro / > /dev/null 2>&1
 # Borrar overrides de SwitchRes que rompian los juegos
 mount -o remount,rw / > /dev/null 2>&1
 rm -f "/recalbox/share/system/configs/retroarch/switchres.ini"
+rm -f "/recalbox/share/system/.config/retroarch/config/switchres.ini"
 rm -f /recalbox/share/system/.config/retroarch/config/*/*.switchres.ini
 mount -o remount,ro / > /dev/null 2>&1
 echo "               Overrides SwitchRes viejos eliminados"
@@ -127,26 +128,33 @@ echo "================================================================="
 echo "                                                "
 
 
-# Copiar parche LASER a múltiples destinos
-
-SOURCE_MAME="/recalbox/share/laser-config/CRT Switchres LASER/FinalBurn Neo/FinalBurn Neo.cfg"
+# Copiar configuracion LASER a los sistemas de Recalbox
+# Recalbox 10.1 lee los overrides por sistema en configs/retroarch/<sistema>.cfg
+SOURCE_CFG="/recalbox/share/laser-config/CRT Switchres LASER/FinalBurn Neo/FinalBurn Neo.cfg"
 SOURCE_SW="/recalbox/share/laser-config/ARCADEres/switchres.ini"
-CONFIG_BASE="/recalbox/share/system/.config/retroarch/config"
+RECALBOX_RA_CONFIG="/recalbox/share/system/configs/retroarch"
+RA_NATIVE_CONFIG="/recalbox/share/system/.config/retroarch/config"
 
-DEST_DIRS=("FinalBurn Neo" "MAME" "MAME 2003 (0.78)" "MAME 2003-Plus" "MAME 2010" "MAME 2015" "Nestopia" "FCEUmm" "QuickNES" "Snes9x" "Snes9x 2005" "Snes9x 2010" "Genesis Plus GX" "Picodrive" "PCSX-ReARMed" "Beetle PSX" "DuckStation" "Flycast" "Gambatte" "mgba" "VBA-M" "SameBoy" "Beetle SuperGrafx" "blueMSX" "uae4arm")
+# switchres.ini por core: sin esto el Pi genera modelines con dotclock muy bajo
+# y los ajustes de ancho (h_size) no se aplican.
+CORE_NAMES="/recalbox/share/system/configs/retroarch.corenames"
+[ -f "$CORE_NAMES" ] || CORE_NAMES="/recalbox/system/resources/retroarch.corenames"
 
-echo "Instalando configuraciones de cores..."
+echo "Instalando configuraciones de sistema..."
 
-for dir in "${DEST_DIRS[@]}"
-do
-    DEST="$CONFIG_BASE/$dir"
-    echo "Copiando a $DEST"
+if [ -f "$CORE_NAMES" ]; then
+  while IFS=';' read -r CORE _REST || [ -n "$CORE" ]; do
+    [ -n "$CORE" ] || continue
+    mkdir -p "$RA_NATIVE_CONFIG/$CORE"
+    cp -f "$SOURCE_SW" "$RA_NATIVE_CONFIG/$CORE/$CORE.switchres.ini"
+  done < "$CORE_NAMES"
+fi
 
-    mkdir -p "$DEST"
-
-    cp "$SOURCE_MAME" "$DEST/$dir.cfg"
-
-    [ -f "$SOURCE_SW" ] && cp -f "$SOURCE_SW" "$DEST/$dir.switchres.ini"
+for SYSTEM_DIR in /recalbox/share/roms/*; do
+    [ -d "$SYSTEM_DIR" ] || continue
+    SYSTEM=$(basename "$SYSTEM_DIR")
+    echo "  $SYSTEM"
+    cp -f "$SOURCE_CFG" "$RECALBOX_RA_CONFIG/$SYSTEM.cfg"
 done
 
 echo ""
