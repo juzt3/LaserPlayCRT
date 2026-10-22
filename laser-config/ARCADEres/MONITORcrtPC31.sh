@@ -42,6 +42,14 @@ mount -o remount,rw / > /dev/null 2>&1
 rm -f "/recalbox/share/system/configs/retroarch/switchres.ini"
 rm -f "/recalbox/share/system/.config/retroarch/config/switchres.ini"
 rm -f /recalbox/share/system/.config/retroarch/config/*/*.switchres.ini
+
+# Kodi: deshacer el forzado de 480i del modo 15kHz (aqui usamos 480p).
+KODI_RES="/usr/lib/python3/site-packages/configgen/generators/kodi/kodiResolution.py"
+[ -f "$KODI_RES" ] || KODI_RES=$(ls /usr/lib/python3*/site-packages/configgen/generators/kodi/kodiResolution.py 2>/dev/null | head -n 1)
+if [ -n "$KODI_RES" ] && [ -f "$KODI_RES" ]; then
+  sed -i 's/"i" if resolution.height > 288 else "p"/"p" if resolution.progressive else "i"/' "$KODI_RES" \
+    && echo "               Kodi: 480p restaurado en 31kHz"
+fi
 mount -o remount,ro / > /dev/null 2>&1
 echo "               Overrides SwitchRes viejos eliminados"
 

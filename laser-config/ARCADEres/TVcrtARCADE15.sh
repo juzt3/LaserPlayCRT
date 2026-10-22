@@ -42,6 +42,15 @@ mount -o remount,rw / > /dev/null 2>&1
 rm -f "/recalbox/share/system/configs/retroarch/switchres.ini"
 rm -f "/recalbox/share/system/.config/retroarch/config/switchres.ini"
 rm -f /recalbox/share/system/.config/retroarch/config/*/*.switchres.ini
+
+# Kodi: configgen pierde el flag de entrelazado y fuerza 480p (31kHz).
+# En 15kHz forzamos 480i para que el CRT pueda sincronizar.
+KODI_RES="/usr/lib/python3/site-packages/configgen/generators/kodi/kodiResolution.py"
+[ -f "$KODI_RES" ] || KODI_RES=$(ls /usr/lib/python3*/site-packages/configgen/generators/kodi/kodiResolution.py 2>/dev/null | head -n 1)
+if [ -n "$KODI_RES" ] && [ -f "$KODI_RES" ]; then
+  sed -i 's/"p" if resolution.progressive else "i"/"i" if resolution.height > 288 else "p"/' "$KODI_RES" \
+    && echo "               Kodi: 480i forzado en 15kHz"
+fi
 mount -o remount,ro / > /dev/null 2>&1
 echo "               Overrides SwitchRes viejos eliminados"
 
