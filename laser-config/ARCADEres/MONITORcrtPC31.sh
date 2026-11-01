@@ -15,13 +15,56 @@ NEW_CMDLINE_FILE="/recalbox/share/laser-config/31script/cmdline.txt"
 BIN_FILE="/recalbox/share/laser-config/31script/LASER120.bin"
 DEST_BIN_DIR="/lib/firmware"
 
-# Activar escritura en /boot
-if [ -d "/boot" ]; then
-  mount -o remount,rw /boot > /dev/null 2>&1
-  [ -f "$CMDLINE_FILE" ] && cp -f "$CMDLINE_FILE" "$CMDLINE_BACKUP" > /dev/null 2>&1
-  [ -f "$NEW_CMDLINE_FILE" ] && cp -f "$NEW_CMDLINE_FILE" "$CMDLINE_FILE" > /dev/null 2>&1
-  mount -o remount,ro /boot > /dev/null 2>&1
-fi
+ARCH="$(uname -m)"
+
+# Arranque: Raspberry Pi usa /boot/cmdline.txt; Recalbox PC (x86) usa GRUB.
+case "$ARCH" in
+  x86_64|i686|i386|amd64)
+    # Recalbox PC arranca con GRUB: el EDID va en la linea `linux` de grub.cfg.
+    # Conector: el que exponga modos (status puede ser "unknown" tras un bridge DP->HDMI).
+    EDID_CONN=""
+    for c in /sys/class/drm/card*-*/; do
+      [ -s "$c/modes" ] || continue
+      name=$(basename "$c"); name=${name#card[0-9]*-}
+      case "$name" in
+        *HDMI*) EDID_CONN=$name; break ;;
+        *) [ -z "$EDID_CONN" ] && EDID_CONN=$name ;;
+      esac
+    done
+    if [ -z "$EDID_CONN" ]; then
+      for c in /sys/class/drm/card*-*/; do
+        name=$(basename "$c"); name=${name#card[0-9]*-}
+        case "$name" in *Writeback*|*Virtual*) continue ;; esac
+        EDID_CONN=$name; break
+      done
+    fi
+    if [ -z "$EDID_CONN" ]; then
+      echo "  AVISO: sin conector detectado. Conecta el monitor y reintenta."
+    else
+      # Rootfs squashfs: /lib/firmware no es escribible. El .bin va a /boot
+      # (particion FAT) y el kernel lo busca ahi via firmware_class.path.
+      DEST_BIN_DIR="/boot"
+      EDID_ARG="firmware_class.path=/boot drm.edid_firmware=$EDID_CONN:LASER120.bin"
+      echo "  Plataforma x86: conector $EDID_CONN"
+      mount -o remount,rw /boot > /dev/null 2>&1
+      for g in /boot/boot/grub/grub.cfg /boot/grub/grub.cfg /boot/EFI/BOOT/grub.cfg /boot/boot/EFI/BOOT/grub.cfg; do
+        [ -f "$g" ] || continue
+        sed -i "s| *firmware_class.path=[^ ]*||g; s| *drm.edid_firmware=[^ ]*||g" "$g"
+        sed -i "s|^\([[:space:]]*linux .*\)$|\1 $EDID_ARG|" "$g" && echo "  EDID -> $g"
+      done
+      mount -o remount,ro /boot > /dev/null 2>&1
+    fi
+    ;;
+  *)
+    # Activar escritura en /boot
+    if [ -d "/boot" ]; then
+      mount -o remount,rw /boot > /dev/null 2>&1
+      [ -f "$CMDLINE_FILE" ] && cp -f "$CMDLINE_FILE" "$CMDLINE_BACKUP" > /dev/null 2>&1
+      [ -f "$NEW_CMDLINE_FILE" ] && cp -f "$NEW_CMDLINE_FILE" "$CMDLINE_FILE" > /dev/null 2>&1
+      mount -o remount,ro /boot > /dev/null 2>&1
+    fi
+    ;;
+esac
 
 # Activar escritura general
 mount -o remount,rw / > /dev/null 2>&1
