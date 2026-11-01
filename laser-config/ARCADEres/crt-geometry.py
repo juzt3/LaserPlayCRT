@@ -7,9 +7,9 @@ import sys, os
 EDID = "/boot/LASER480.bin"
 RC   = "/recalbox/share/system/recalbox.conf"
 B    = 0xA6     # inicio del DTD en el bloque CEA
-HT   = 1716     # htotal fijo
+HT   = 858      # htotal fijo (13.5 MHz / 15.7 kHz)
 VT   = 525      # vtotal fijo
-ORIG = dict(hactive=1320, vactive=480, hfront=152, hsync=124, vfront=9, vsync=2)
+ORIG = dict(hactive=720, vactive=480, hfront=19, hsync=62, vfront=8, vsync=6)
 
 
 def get(d):

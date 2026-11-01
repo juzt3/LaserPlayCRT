@@ -23,7 +23,7 @@ case "$ARCH" in
   x86_64|i686|i386|amd64)
     IS_PC=1
     echo "  Plataforma x86 (Recalbox PC)"
-    # EDID propio de PC (1320x480i, sin modos PAL) y args de GRUB que si funcionaron.
+    # EDID propio de PC (720x480i 13.5MHz, sin modos PAL) y args de GRUB que si funcionaron.
     PC_EDID="/recalbox/share/laser-config/ARCADEres/LASER480-pc.bin"
 
     # Detectar el conector con sink usando el EDID cacheado (no dispara AUX/probe).
@@ -160,12 +160,12 @@ done
 if [ "$IS_PC" = "1" ]; then
   RC="/recalbox/share/system/recalbox.conf"
   if [ -f "$RC" ]; then
-    # es.videomode tiene que coincidir con el ancho del modo (1320x480)
-    sed -i 's|^system\.es\.videomode=.*|system.es.videomode=1320x480|' "$RC"
+    # es.videomode tiene que coincidir con el modo (720x480 = 4:3 como el Pi)
+    sed -i 's|^system\.es\.videomode=.*|system.es.videomode=720x480|' "$RC"
     # conservar el theme que el usuario ya eligio (no imponer ninguno)
     OLD_THEME=$(grep -m1 '^emulationstation\.theme\.folder=' "${RC}.bak" 2>/dev/null)
     [ -n "$OLD_THEME" ] && sed -i "s|^emulationstation\.theme\.folder=.*|$OLD_THEME|" "$RC"
-    echo "  es.videomode=1320x480"
+    echo "  es.videomode=720x480"
   fi
 
   # Herramientas para centrar/mover la imagen (userscripts manuales)
@@ -283,7 +283,7 @@ echo ""
 if [ "$IS_PC" = "1" ]; then
   echo "      En PC (x86) el EDID se aplica sobre el conector HDMI-A-1"
   echo "      (puerto DP++ con adaptador DP->HDMI) y la imagen sale"
-  echo "      a 15 kHz (1320x480i)."
+  echo "      a 15 kHz (720x480i, 4:3 como las consolas)."
   echo "      Si no hay imagen, reconecta el cable DP->HDMI o ajusta"
   echo "      'video=HDMI-A-1:e' en /boot/grub/grub.cfg si tu puerto"
   echo "      se llama distinto (ls /sys/class/drm/)."
