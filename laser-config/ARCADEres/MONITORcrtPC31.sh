@@ -133,6 +133,20 @@ for ORIGEN in "${!ARCHIVOS[@]}"; do
   fi
 done
 
+# Hotkeys de RetroArch: sin esta linea configgen no genera input_menu_toggle_btn
+# (solo deja "salir") y el menu no abre con Hotkey+B. En Recalbox 10.1.1 el
+# recalbox.conf de /recalbox/share/system puede quedar reducido a los valores
+# modificados por el usuario, asi que la aseguramos siempre.
+RC_FILE="/recalbox/share/system/recalbox.conf"
+if [ -f "$RC_FILE" ]; then
+  if grep -qE '^;?system\.emulators\.specialkeys=' "$RC_FILE"; then
+    sed -i 's|^;*system\.emulators\.specialkeys=.*|system.emulators.specialkeys=default|' "$RC_FILE"
+  else
+    printf '\nsystem.emulators.specialkeys=default\n' >> "$RC_FILE"
+  fi
+  echo "  Hotkeys de RetroArch habilitadas (menu con Hotkey+B)"
+fi
+
 # Volver a solo lectura (opcional)
 mount -o remount,ro / > /dev/null 2>&1
 mount -o remount,ro /boot > /dev/null 2>&1
