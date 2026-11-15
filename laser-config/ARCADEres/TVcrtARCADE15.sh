@@ -281,6 +281,21 @@ for SYSTEM_DIR in /recalbox/share/roms/*; do
     cp -f "$SOURCE_CFG" "$RECALBOX_RA_CONFIG/$SYSTEM.cfg"
 done
 
+# Consolas que cambian de resolucion a mitad de juego (LRPS2: 448p/512i,
+# Flycast/PS2: 240p/480i) y SwitchRes reprograma el modo en cada cambio: la
+# imagen salta una linea y parpadea. En un CRT de 15kHz estas consolas salen
+# siempre en 480i, asi que fijamos el modo y dejamos que escale RetroArch.
+for SYS_CFG in ps2 dreamcast naomi atomiswave; do
+  CFG="$RECALBOX_RA_CONFIG/$SYS_CFG.cfg"
+  [ -f "$CFG" ] || continue
+  if grep -q '^crt_switch_resolution[[:space:]]*=' "$CFG"; then
+    sed -i 's|^crt_switch_resolution[[:space:]]*=.*|crt_switch_resolution = 0|' "$CFG"
+  else
+    printf '\ncrt_switch_resolution = 0\n' >> "$CFG"
+  fi
+  echo "  $SYS_CFG: SwitchRes desactivado (imagen fija en 480i)"
+done
+
 echo ""
 echo ""
 echo ""
